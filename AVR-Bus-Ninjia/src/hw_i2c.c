@@ -27,13 +27,19 @@
 #include "cpu.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+// ugly patch 
+#define TWS3 TWS03
+#define TWS4 TWS04
+#define TWS5 TWS05
+#define TWS6 TWS06
+#define TWS7 TWS07
 #include <util/twi.h>
 #include <util/delay_basic.h>
 #include <util/delay.h>
 
 #define I2C_INIT_FREQ   100 // 100kHz
 
-//#define USE_HARDWARE_I2C 1
+#define USE_HARDWARE_I2C 1
 
 #if USE_HARDWARE_I2C
 //***************************************************************************
@@ -116,7 +122,7 @@ static uint8_t hw_i2c_read_bit(void);
 
 
 #if USE_HARDWARE_I2C
-#error UNTESTED, DRAGONS BE HERE
+#warning UNTESTED, DRAGONS BE HERE
 /**
  * Get the TWPS (prescaler) bits for the TWI
  *
@@ -158,10 +164,10 @@ uint8_t hw_i2c_get_twbr(uint16_t freq, uint8_t twps)
 void hw_i2c_init(void)
 {
 #if USE_HARDWARE_I2C
-    TWCR = 0;
+    TWCR1 = 0;
     hw_i2c_config(I2C_INIT_FREQ);
-    TWDR = 0xFF;
-    TWCR = TWICR_TWEN;
+    TWDR1 = 0xFF;
+    TWCR1 = TWICR_TWEN;
 #else
     SDA_DDR &= ~_BV(SDA);       // release SDA
     SCL_DDR &= ~_BV(SCL);       // release SCL
@@ -176,7 +182,7 @@ void hw_i2c_shutdown(void)
 {
 #if USE_HARDWARE_I2C
 #warning untested code
-    TWCR &= ~TWICR_TWEN;
+    TWCR1 &= ~TWICR_TWEN;
 #endif
 }
 
@@ -194,8 +200,8 @@ void hw_i2c_config(uint16_t freq)
     uint8_t twps;
 
     twps = hw_i2c_get_twps(freq);
-    TWBR = hw_i2c_get_twbr(freq, twps);
-    TWSR = twps & 0x03;
+    TWBR1 = hw_i2c_get_twbr(freq, twps);
+    TWSR1 = twps & 0x03;
 #else
     (void)freq;     // frequency not used
 #endif
@@ -205,9 +211,9 @@ void hw_i2c_config(uint16_t freq)
 uint16_t hw_i2c_get_freq(void)
 {
 #if USE_HARDWARE_I2C
-    uint8_t twps = 1 << (2 * (TWSR & 0x03));
+    uint8_t twps = 1 << (2 * (TWSR1 & 0x03));
     uint16_t freq = F_CPU / 1000UL;
-    return freq / (16 + 2*TWBR * twps);
+    return freq / (16 + 2*TWBR1 * twps);
 #else
     return I2C_INIT_FREQ;   // default frequency
 #endif
@@ -222,18 +228,18 @@ BOOL hw_i2c_master_start(uint8_t address, hw_i2c_rdwr_t hw_i2c_rd_wr)
 
     cpu_disable_int();
 
-    TWCR = TWICR_TWEN | TWICR_TWINT | TWICR_TWSTA;
-    while ((TWCR & TWICR_TWINT) == 0);
+    TWCR1 = TWICR_TWEN | TWICR_TWINT | TWICR_TWSTA;
+    while ((TWCR1 & TWICR_TWINT) == 0);
 
-    twsr = TWSR & TW_STATUS_MASK;
+    twsr = TWSR1 & TW_STATUS_MASK;
     if ((twsr != TW_START) && (twsr != TW_REP_START)) {
         error = TRUE;
     } else {
-        TWDR = (address & 0xfe) | hw_i2c_rd_wr;
-        TWCR = TWICR_TWEN | TWICR_TWINT;
-        while ((TWCR & TWICR_TWINT) == 0);
+        TWDR1 = (address & 0xfe) | hw_i2c_rd_wr;
+        TWCR1 = TWICR_TWEN | TWICR_TWINT;
+        while ((TWCR1 & TWICR_TWINT) == 0);
 
-        twsr = TWSR & TW_STATUS_MASK;
+        twsr = TWSR1 & TW_STATUS_MASK;
         if (hw_i2c_rd_wr == hw_i2c_rd) {
             error = twsr != TW_MR_SLA_ACK;
         } else {
@@ -266,7 +272,7 @@ BOOL hw_i2c_master_start(uint8_t address, hw_i2c_rdwr_t hw_i2c_rd_wr)
 void hw_i2c_master_stop(void)
 {
 #if USE_HARDWARE_I2C
-    TWCR = TWICR_TWEN | TWICR_TWINT | TWICR_TWSTO;
+    TWCR1 = TWICR_TWEN | TWICR_TWINT | TWICR_TWSTO;
 #else
     cpu_disable_int();
     delay_T2();
@@ -315,10 +321,10 @@ BOOL hw_i2c_master_tx(const uint8_t *buf, uint8_t buf_len)
 
 #if USE_HARDWARE_I2C
     while ((buf_len > 0) && !error) {
-        TWDR = *buf++;
-        TWCR = TWICR_TWEN | TWICR_TWINT;
-        while ((TWCR & TWICR_TWINT) == 0);
-        error = (TWSR & TW_STATUS_MASK) != TW_MT_DATA_ACK;
+        TWDR1 = *buf++;
+        TWCR1 = TWICR_TWEN | TWICR_TWINT;
+        while ((TWCR1 & TWICR_TWINT) == 0);
+        error = (TWSR1 & TW_STATUS_MASK) != TW_MT_DATA_ACK;
         buf_len--;
     }
 #else
@@ -373,13 +379,13 @@ BOOL hw_i2c_master_rx(uint8_t *buf, uint8_t buf_len, BOOL ack)
     while ((buf_len > 0) && !error) {
         send_ack = (buf_len > 1) || ack;
         if (send_ack) {
-            TWCR = TWICR_TWEN | TWICR_TWINT | TWICR_TWEA;
+            TWCR1 = TWICR_TWEN | TWICR_TWINT | TWICR_TWEA;
         } else {
-            TWCR = TWICR_TWEN | TWICR_TWINT;
+            TWCR1 = TWICR_TWEN | TWICR_TWINT;
         }
-        while ((TWCR & TWICR_TWINT) == 0);
-        *buf++ = TWDR;
-        twsr = TWSR & TW_STATUS_MASK;
+        while ((TWCR1 & TWICR_TWINT) == 0);
+        *buf++ = TWDR1;
+        twsr = TWSR1 & TW_STATUS_MASK;
         if (send_ack) {
             error = twsr != TW_MR_DATA_ACK;
         } else {
