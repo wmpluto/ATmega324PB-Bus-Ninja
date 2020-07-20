@@ -103,8 +103,9 @@
 #define sda_hi()        (SDA_DDR &= ~_BV(SDA))
 #define scl_hi()        (SCL_DDR &= ~_BV(SCL))
 
-#define T2_TICKS        (F_CPU/(I2C_INIT_FREQ * 1000UL * 3UL))
-#define delay_T2()      (_delay_loop_1(T2_TICKS > 0 ? T2_TICKS : 1))
+// #define T2_TICKS        (F_CPU/(I2C_INIT_FREQ * 1000UL * 3UL))
+// #define delay_T2()      (_delay_loop_1(T2_TICKS > 0 ? T2_TICKS : 1))
+#define delay_T2()      (_delay_us(1000/I2C_INIT_FREQ/2 > 1 ? 1000/I2C_INIT_FREQ/2 - 1 : 1))
 
 static BOOL hold_bus;
 
