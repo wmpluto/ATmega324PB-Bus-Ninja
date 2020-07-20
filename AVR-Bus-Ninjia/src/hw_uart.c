@@ -26,8 +26,14 @@ void hw_uart_init(void)
     UBRR0 = (F_CPU / (16UL * BAUD)) - 1;
     UCSR0B = _BV(TXEN0) | _BV(RXEN0);
 #elif __AVR_ATmega324PB__
+#if BAUD < 57600
     UBRR1 = (F_CPU / (16UL * BAUD)) - 1;
+    UCSR1B = _BV(TXEN) | _BV(RXEN); 
+#else
+    UCSR1A = _BV(U2X);
+    UBRR1 = (F_CPU / (8UL * BAUD)) - 1;
     UCSR1B = _BV(TXEN) | _BV(RXEN);    
+#endif   
 #elif __AVR_AT90USB162__
     UBRR1 = UBRR_VAL;
     UCSR1B = _BV(TXEN1) | _BV(RXEN1);
