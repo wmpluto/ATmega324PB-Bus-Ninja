@@ -35,7 +35,7 @@ static uint8_t last_key = 0x00;   // last character received
 
 static void prompt(void)
 {
-    console_puts_P(PSTR("> "));
+    console_puts_P(PSTR("\r\nbus-ninja> "));
 }
 
 void console_init(void)

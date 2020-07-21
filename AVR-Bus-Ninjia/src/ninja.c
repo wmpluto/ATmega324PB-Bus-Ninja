@@ -56,10 +56,9 @@ int main(void)
     console_newline();
     console_puts_P(PSTR("*"));
     console_newline();
-    console_puts_P(PSTR("* Bus ninja ver. " VERSION_STR));
+    console_puts_P(PSTR("* Bus ninja @ " VERSION_STR));
     console_newline();
     console_puts_P(PSTR("*"));
-    console_newline();
     console_newline();
 
 #ifdef CONFIG_DEBUG_RESET_REASON
@@ -69,7 +68,7 @@ int main(void)
     console_newline();
 #endif
 
-    console_puts_P(PSTR("> "));
+    console_puts_P(PSTR("\r\nbus-ninja> "));
 
     /* Set default LED pattern */
     led_set_seq(LED_SEQ_SINE);
