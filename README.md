@@ -13,6 +13,10 @@ Port the [tobyjaffey](https://github.com/tobyjaffey)'s [bus-ninja](https://githu
 
 ## Usage
 
+### UART Setting
+
+Default baud rate: 1Mbps@8Mhz SYS_CLK
+
 ### SPI
 
 #### Connection

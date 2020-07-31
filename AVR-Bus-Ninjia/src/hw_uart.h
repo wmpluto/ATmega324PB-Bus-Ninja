@@ -2,7 +2,7 @@
 #define HW_UART_H 1
 
 #ifndef BAUD
-#define BAUD 57600
+#define BAUD 1000000
 #endif
 
 void hw_uart_init(void);
